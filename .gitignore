@@ -1,0 +1,20 @@
+# Local configuration
+config/config.php
+.env
+
+# Dependencies
+vendor/
+
+# Database dumps
+database/backups/*
+!database/backups/.gitkeep
+
+# Test and tool caches
+.phpunit.cache/
+.phpunit.result.cache
+*.log
+
+# Operating system files
+Thumbs.db
+Desktop.ini
+.DS_Store
