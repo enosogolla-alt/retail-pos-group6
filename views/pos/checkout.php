@@ -1,3 +1,4 @@
+<?php ob_start(); ?>
 <?php /* Checkout screen: product search, cart, order summary and payment buttons · Owner: Stacy Kwamboka (M3) · Tasks 3.1-3.4 · Prototype: Checkout */ ?>
 <div class="checkout">
 
@@ -92,3 +93,4 @@
 
 </div>
 <?php require __DIR__ . '/payment.php'; ?>
+<?php $content = ob_get_clean(); require __DIR__ . '/../layouts/pos_layout.php'; ?>
