@@ -1,39 +1,48 @@
-<?php
-// views/layouts/pos_layout.php  (Task 3.1 - Stacy)
-// The frame around every cashier screen: dark top bar + page content.
-// The controller sets $pageTitle and $viewFile, then includes this layout.
-// e() is the safe-output helper from core/helpers.php.
-
-$cashierName = $_SESSION['user']['full_name'] ?? 'Cashier';
-?>
+<?php /* Checkout layout: dark top bar and page content · Owner: Stacy Kwamboka (M3) · Task 3.1 */ ?>
+<?php $user = Auth::user(); ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= e($pageTitle ?? 'Checkout') ?> - Retail POS</title>
-    <link rel="stylesheet" href="<?= $baseUrl ?? '' ?>/assets/css/app.css">
+    <title><?= e($title ?? 'Checkout') ?> · Retail POS</title>
+    <link rel="icon" href="<?= e(asset('img/logo.svg')) ?>" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('css/pos.css')) ?>">
 </head>
 <body class="pos-body">
 
 <header class="pos-topbar">
-    <div class="pos-topbar__brand">Retail POS</div>
-
-    <div class="pos-topbar__user">
-        <span class="pos-topbar__name"><?= e($cashierName) ?></span>
-
-        <!-- Logout is a POST so the CSRF token is checked (Kyle's Csrf.php) -->
-        <form action="/logout" method="post" class="pos-topbar__logout">
-            <?= Csrf::field() ?>
-            <button type="submit" class="btn btn--ghost">Log out</button>
-        </form>
+    <div class="pos-topbar-brand">
+        <img src="<?= e(asset('img/logo.svg')) ?>" alt="" width="28" height="28">
+        <span>Retail POS</span>
+        <span class="pos-topbar-section">Checkout</span>
     </div>
+
+    <?php if ($user !== null): ?>
+        <div class="pos-topbar-user">
+            <span><?= e($user['role']) ?>: <strong><?= e($user['full_name']) ?></strong></span>
+
+            <?php if ($user['role'] === 'Admin'): ?>
+                <a class="btn btn-sm" href="<?= e(url('/admin/dashboard')) ?>">Admin panel</a>
+            <?php endif; ?>
+
+            <?php /* A POST request, so the CSRF token is checked and a link cannot sign a user out. */ ?>
+            <form action="<?= e(url('/logout')) ?>" method="post" class="pos-topbar-logout">
+                <?= Csrf::field() ?>
+                <button type="submit" class="btn btn-sm">Log out</button>
+            </form>
+        </div>
+    <?php endif; ?>
 </header>
 
 <main class="pos-main">
-    <?php require $viewFile; ?>
+<?= $content ?>
 </main>
 
-<script src="<?= $baseUrl ?? '' ?>/assets/js/pos.js"></script>
+<script src="<?= e(asset('js/pos.js')) ?>"></script>
 </body>
-</html> 
+</html>

@@ -1,0 +1,329 @@
+/*
+ * Checkout screen and payment dialog styles. Builds on the tokens and components in app.css.
+ * Owner: Stacy Kwamboka (M3)
+ * Tasks: 3.1-3.5
+ */
+
+/* Page frame */
+
+.pos-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.pos-topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 20px;
+    background: var(--ink);
+    color: #ffffff;
+}
+
+.pos-topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.pos-topbar-section {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.pos-topbar-section::before {
+    content: "· ";
+}
+
+.pos-topbar-user {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 14px;
+}
+
+.pos-topbar-user strong {
+    color: #ffffff;
+}
+
+.pos-topbar-logout {
+    margin: 0;
+}
+
+.pos-main {
+    flex: 1;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 16px 20px;
+}
+
+/* Layout: items on the left, summary on the right; stacks on narrow screens. */
+
+.checkout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.checkout-items {
+    display: flex;
+    flex: 999 1 560px;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+/* Product search */
+
+.scan-box {
+    position: relative;
+}
+
+.scan-box-icon {
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.scan-box-input {
+    height: 44px;
+    padding-left: 44px;
+    border-radius: 12px;
+    font-size: 15px;
+}
+
+.scan-box .field-error {
+    margin-top: 6px;
+}
+
+/* Quick add */
+
+.quick-add {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.quick-add-title {
+    margin-right: 2px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.quick-add .chip {
+    min-height: 32px;
+    font-size: 12px;
+}
+
+/* Cart */
+
+.cart {
+    overflow: hidden;
+}
+
+.cart-count {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.cart-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 40px 16px;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+}
+
+.cart-empty[hidden] {
+    display: none;
+}
+
+.cart-empty-icon {
+    margin-bottom: 8px;
+    color: #9aa6a0;
+}
+
+.cart-empty-title {
+    color: var(--ink-soft);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+/* Order summary */
+
+.checkout-summary {
+    display: flex;
+    flex: 1 1 280px;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 100%;
+    padding: 16px;
+}
+
+.summary-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    font-size: 13px;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.summary-line dt {
+    color: var(--muted);
+}
+
+.summary-line dd {
+    margin: 0;
+}
+
+.summary-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line-strong);
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.summary-total-amount {
+    color: var(--primary);
+    font-size: 24px;
+    font-variant-numeric: tabular-nums;
+}
+
+.summary-action {
+    min-height: 36px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Payment dialog */
+
+.pay-dialog {
+    width: min(460px, calc(100vw - 32px));
+    max-height: 92vh;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    color: var(--ink);
+}
+
+.pay-dialog::backdrop {
+    background: rgba(22, 32, 28, 0.5);
+}
+
+.pay-dialog-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+}
+
+.pay-dialog-title {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.pay-tabs {
+    display: flex;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--line);
+}
+
+.pay-tab {
+    flex: 1;
+    min-height: 44px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    background: none;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.pay-tab.is-active {
+    border-bottom-color: var(--primary);
+    color: var(--primary);
+}
+
+.pay-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+}
+
+.pay-due,
+.pay-change {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--ink-soft);
+    font-weight: 600;
+}
+
+.pay-due {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--surface-sunken);
+}
+
+.pay-due-amount,
+.pay-change-amount {
+    font-size: 26px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.pay-due-amount {
+    color: var(--ink);
+}
+
+.pay-change-amount {
+    color: var(--primary);
+}
+
+.pay-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.pay-panel[hidden] {
+    display: none;
+}
+
+.pay-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 0 20px 20px;
+}
