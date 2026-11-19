@@ -1,0 +1,7 @@
+.payment-dialog { position: fixed; inset: 0; background: rgba(0,0,0,.5); align-items: center; justify-content: center; z-index: 100; }
+.payment-card { background: #fff; padding: 24px; border-radius: 8px; width: 380px; max-width: 94vw; }
+.tabs { display: flex; gap: 6px; margin: 8px 0; }
+.tab { padding: 8px 14px; border: 0; border-radius: 4px; background: #e2e8f0; cursor: pointer; }
+.tab.active { background: #0f172a; color: #fff; }
+.tab-pane { margin: 12px 0; } .tab-pane input { width: 100%; margin: 4px 0 8px; padding: 8px; }
+.dialog-actions { display: flex; flex-direction: column; gap: 6px; }
