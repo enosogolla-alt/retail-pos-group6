@@ -1,131 +1,156 @@
-(() => {
-const BASE = window.POS_BASE_URL;
-const cart = [];
-let discountPct = 0;
-let currentPayment = null;   // {method, amount, mpesa_code}
-let polling = 0;             // token so an old poll stops when the dialog closes
+/*
+ * Checkout screen behaviour: scanner focus and payment dialog.
+ * Totals shown here are for display; the server recalculates them when the sale is saved.
+ * Owner: Stacy Kwamboka (M3)
+ * Tasks: 3.1, 3.5
+ */
+'use strict';
 
-const $ = (id) => document.getElementById(id);
-const fmt = (n) => 'KES ' + Number(n).toFixed(2);
-const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
-const post = (path, body) => fetch(BASE + path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf() }, body: JSON.stringify(body) }).then(r => r.json());
+(function () {
+    const searchBox = document.getElementById('product-search');
+    if (!searchBox) {
+        return;
+    }
 
-// Prices are VAT-inclusive: VAT is extracted, not added.
-function totals() {
-    const subtotal = cart.reduce((s, l) => s + l.price * l.qty, 0);
-    const discount = subtotal * (discountPct / 100);
-    const total = subtotal - discount;
-    return { subtotal, discount, vat: total - total / 1.16, total };
-}
+    // Live cart total; stays 0 until the cart (tasks 3.2-3.3) adds items.
+    let cartTotal = 0;
 
-async function lookup(code) {
-    const res = await fetch(`${BASE}products/lookup?code=${encodeURIComponent(code)}`);
-    return res.ok ? res.json() : null;
-}
-function addToCart(p) {
-    const id = Number(p.id), line = cart.find(l => l.id === id);
-    if (line) line.qty++; else cart.push({ id, name: p.name, price: Number(p.selling_price), qty: 1 });
-    render();
-}
-function changeQty(id, d) {
-    const line = cart.find(l => l.id === id); if (!line) return;
-    line.qty += d; if (line.qty <= 0) cart.splice(cart.indexOf(line), 1);
-    render();
-}
-function removeLine(id) { const i = cart.findIndex(l => l.id === id); if (i >= 0) cart.splice(i, 1); render(); }
+    const dialog = document.getElementById('payment-dialog');
+    const payTotal = document.getElementById('pay-total');
+    const summaryTotal = document.getElementById('summary-total');
+    const tabCash = document.getElementById('tab-cash');
+    const tabMpesa = document.getElementById('tab-mpesa');
+    const panelCash = document.getElementById('panel-cash');
+    const panelMpesa = document.getElementById('panel-mpesa');
+    const cashInput = document.getElementById('cash-tendered');
+    const cashChange = document.getElementById('cash-change');
+    const cashError = document.getElementById('cash-error');
+    const mpesaPhone = document.getElementById('mpesa-phone');
+    const mpesaCode = document.getElementById('mpesa-code');
+    const mpesaError = document.getElementById('mpesa-error');
+    const completeButton = document.getElementById('complete-sale');
+    const cancelButton = document.getElementById('pay-cancel');
+    const payCashButton = document.getElementById('pay-cash');
+    const payMpesaButton = document.getElementById('pay-mpesa');
 
-function render() {
-    $('cart-body').innerHTML = cart.length ? cart.map(l => `
-        <tr><td>${esc(l.name)}</td><td>${fmt(l.price)}</td>
-        <td><button type="button" class="qty-btn" data-id="${l.id}" data-delta="-1">−</button> ${l.qty}
-            <button type="button" class="qty-btn" data-id="${l.id}" data-delta="1">+</button></td>
-        <td>${fmt(l.price * l.qty)}</td>
-        <td><button type="button" class="remove-btn" data-id="${l.id}">×</button></td></tr>`).join('')
-        : '<tr><td colspan="5" class="empty">Cart is empty</td></tr>';
-    const t = totals();
-    $('sum-subtotal').textContent = fmt(t.subtotal); $('sum-discount').textContent = fmt(t.discount);
-    $('sum-vat').textContent = fmt(t.vat); $('sum-total').textContent = fmt(t.total);
-}
+    let method = 'cash';
 
-// ---- payment dialog (inline, cart is preserved) ----
-function showTab(method) {
-    polling++;
-    currentPayment = { method };
-    $('complete-sale').disabled = true;
-    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === method.toLowerCase()));
-    $('tab-cash').style.display = method === 'CASH' ? 'block' : 'none';
-    $('tab-mpesa').style.display = method === 'MPESA' ? 'block' : 'none';
-    if (method === 'CASH') updateCash();
-}
-function openPayment(method) {
-    if (!cart.length) return alert('Cart is empty');
-    $('pay-total').textContent = fmt(totals().total);
-    $('cash-amount').value = ''; $('cash-change').textContent = fmt(0);
-    $('mpesa-phone').value = ''; $('mpesa-status').textContent = 'Waiting…';
-    $('payment-dialog').style.display = 'flex';
-    showTab(method);
-}
-function closePayment() { polling++; $('payment-dialog').style.display = 'none'; currentPayment = null; }
-function updateCash() {
-    const total = totals().total, cash = Number($('cash-amount').value) || 0;
-    $('cash-change').textContent = fmt(Math.max(cash - total, 0));
-    if (currentPayment?.method === 'CASH') { currentPayment.amount = total; $('complete-sale').disabled = cash < total; }
-}
-async function sendMpesaPrompt() {
-    const phone = $('mpesa-phone').value.trim();
-    if (!/^(\+?254|0)[17]\d{8}$/.test(phone)) return alert('Enter a valid Safaricom number, e.g. 2547XXXXXXXX');
-    const amount = Math.ceil(totals().total);          // STK takes whole shillings; server accepts amount >= total
-    const data = await post('mpesa/stk', { phone, amount });
-    if (data.error) return alert(data.error);
-    currentPayment.amount = amount;
-    $('mpesa-status').textContent = 'Prompt sent — waiting for customer…';
-    pollMpesa(data.CheckoutRequestID);
-}
-function pollMpesa(id) {
-    const my = ++polling; let tries = 0;
-    const tick = async () => {
-        if (my !== polling) return;
-        const data = await (await fetch(`${BASE}mpesa/status?id=${encodeURIComponent(id)}`)).json();
-        if (my !== polling) return;
-        if (data.status === 'paid') {
-            $('mpesa-status').textContent = 'Paid: ' + data.mpesa_code;
-            currentPayment.mpesa_code = data.mpesa_code; $('complete-sale').disabled = false; return;
+    function money(amount) {
+        return Number(amount).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function focusSearch() {
+        searchBox.focus();
+    }
+
+    // A barcode scanner types into whatever has focus, so focus returns to the
+    // search box after any click that is not on a field or inside the dialog.
+    document.addEventListener('click', function (event) {
+        if (event.target.closest('dialog')) {
+            return;
         }
-        if (data.status === 'failed') { $('mpesa-status').textContent = 'Payment failed or cancelled.'; return; }
-        if (++tries > 40) { $('mpesa-status').textContent = 'Timed out. Try sending the prompt again.'; return; }
-        setTimeout(tick, 3000);
-    };
-    setTimeout(tick, 3000);
-}
-async function completeSale() {
-    if (!currentPayment) return;
-    $('complete-sale').disabled = true;
-    const data = await post('sales', { cart: cart.map(l => ({ product_id: l.id, qty: l.qty })), discount_pct: discountPct, payment: currentPayment });
-    if (data.error) { $('complete-sale').disabled = false; return alert(data.error); }
-    window.location.href = `${BASE}receipts/${data.receipt_no}`;
-}
+        if (!['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName)) {
+            focusSearch();
+        }
+    });
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (!$('cart-body')) return;
-    $('search').addEventListener('keydown', async (e) => {
-        if (e.key !== 'Enter') return;
-        const q = e.target.value.trim(); if (!q) return;
-        const p = await lookup(q);
-        if (p && p.id) { addToCart(p); e.target.value = ''; } else alert('Product not found');
+    function showTab(which) {
+        method = which;
+        const isCash = which === 'cash';
+
+        panelCash.hidden = !isCash;
+        panelMpesa.hidden = isCash;
+        tabCash.classList.toggle('is-active', isCash);
+        tabMpesa.classList.toggle('is-active', !isCash);
+        tabCash.setAttribute('aria-selected', String(isCash));
+        tabMpesa.setAttribute('aria-selected', String(!isCash));
+
+        checkPayment();
+        (isCash ? cashInput : mpesaPhone).focus();
+    }
+
+    function checkCash() {
+        const tendered = parseFloat(cashInput.value);
+
+        if (Number.isNaN(tendered)) {
+            cashChange.textContent = money(0);
+            cashError.hidden = true;
+            return false;
+        }
+
+        if (tendered < cartTotal) {
+            cashChange.textContent = money(0);
+            cashError.textContent = 'Amount received is less than the total.';
+            cashError.hidden = false;
+            return false;
+        }
+
+        cashChange.textContent = money(tendered - cartTotal);
+        cashError.hidden = true;
+        return true;
+    }
+
+    // Format checks only; whether a code has already been used is checked by the server.
+    function checkMpesa() {
+        const phoneOk = /^0[17]\d{8}$/.test(mpesaPhone.value.trim());
+        const codeOk = /^[A-Za-z0-9]{10}$/.test(mpesaCode.value.trim());
+
+        if (mpesaCode.value.length > 0 && !codeOk) {
+            mpesaError.textContent = 'The M-Pesa code must be exactly 10 letters or numbers.';
+            mpesaError.hidden = false;
+        } else {
+            mpesaError.hidden = true;
+        }
+
+        return phoneOk && codeOk;
+    }
+
+    function checkPayment() {
+        const valid = method === 'cash' ? checkCash() : checkMpesa();
+        completeButton.disabled = !valid;
+    }
+
+    function openPayment(which) {
+        payTotal.textContent = money(cartTotal);
+        cashInput.value = '';
+        mpesaPhone.value = '';
+        mpesaCode.value = '';
+        showTab(which);
+        dialog.showModal();
+    }
+
+    payCashButton.addEventListener('click', function () {
+        openPayment('cash');
     });
-    $('cart-body').addEventListener('click', (e) => {
-        const id = Number(e.target.dataset.id); if (!id) return;
-        if (e.target.classList.contains('qty-btn')) changeQty(id, Number(e.target.dataset.delta));
-        if (e.target.classList.contains('remove-btn')) removeLine(id);
+    payMpesaButton.addEventListener('click', function () {
+        openPayment('mpesa');
     });
-    $('discount-input').addEventListener('input', (e) => { discountPct = Math.min(10, Math.max(0, Number(e.target.value) || 0)); render(); });
-    $('pay-cash').addEventListener('click', () => openPayment('CASH'));
-    $('pay-mpesa').addEventListener('click', () => openPayment('MPESA'));
-    $('cash-amount').addEventListener('input', updateCash);       // attached once
-    document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab.toUpperCase())));
-    $('mpesa-send').addEventListener('click', sendMpesaPrompt);
-    $('complete-sale').addEventListener('click', completeSale);
-    $('cancel-payment').addEventListener('click', closePayment);
-});
+    tabCash.addEventListener('click', function () {
+        showTab('cash');
+    });
+    tabMpesa.addEventListener('click', function () {
+        showTab('mpesa');
+    });
+
+    cashInput.addEventListener('input', checkPayment);
+    mpesaPhone.addEventListener('input', checkPayment);
+    mpesaCode.addEventListener('input', checkPayment);
+
+    cancelButton.addEventListener('click', function () {
+        dialog.close();
+    });
+
+    // Fires for Cancel and for the Esc key.
+    dialog.addEventListener('close', focusSearch);
+
+    // Quick add puts the product name in the search box, ready to add with Enter.
+    document.querySelectorAll('[data-quick-add]').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            searchBox.value = chip.dataset.quickAdd;
+        });
+    });
+
+    summaryTotal.textContent = money(cartTotal);
+
+    focusSearch();
 })();
