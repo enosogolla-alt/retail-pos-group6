@@ -1,18 +1,54 @@
-<?php $u = Auth::user(); ?>
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>POS · Retail POS</title>
+<?php  ?>
+<?php
+$user = Auth::user();
+$messages = takeFlash();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= e($title ?? 'Checkout') ?> · Retail POS</title>
+    <link rel="icon" href="<?= e(asset('img/logo.svg')) ?>" type="image/svg+xml">
+    <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('css/pos.css')) ?>">
     <meta name="csrf-token" content="<?= e(Csrf::token()) ?>">
-    <link rel="stylesheet" href="<?= e(base_url('assets/css/app.css')) ?>">
-    <link rel="stylesheet" href="<?= e(base_url('assets/css/pos-dialog.css')) ?>">
-    <script>window.POS_BASE_URL = "<?= e(base_url()) ?>";</script>
 </head>
 <body class="pos-body">
-<nav class="pos-nav"><strong>Retail POS</strong><span><?= e($u['name']) ?> · <?= e($u['role']) ?></span>
-    <form method="post" action="<?= e(base_url('logout')) ?>" style="display:inline"><?= Csrf::field() ?><button type="submit">Logout</button></form>
-</nav>
+
+<header class="pos-topbar">
+    <div class="pos-topbar-brand">
+        <img src="<?= e(asset('img/logo.svg')) ?>" alt="" width="28" height="28">
+        <span>Retail POS</span>
+        <span class="pos-topbar-section"><?= e($section ?? 'Checkout') ?></span>
+    </div>
+
+    <?php if ($user !== null): ?>
+        <div class="pos-topbar-user">
+            <span><?= e($user['role']) ?>: <strong><?= e($user['full_name']) ?></strong></span>
+
+            <nav class="pos-nav" aria-label="Cashier">
+                <?php $current = $section ?? 'Checkout'; ?>
+                <a class="btn btn-sm <?= $current === 'Checkout' ? 'is-current' : '' ?>" href="<?= e(url('/pos')) ?>"<?= $current === 'Checkout' ? ' aria-current="page"' : '' ?>>Checkout</a>
+                <a class="btn btn-sm <?= $current === 'My sales' ? 'is-current' : '' ?>" href="<?= e(url('/my-sales')) ?>"<?= $current === 'My sales' ? ' aria-current="page"' : '' ?>>My sales</a>
+            </nav>
+
+            <?php /* A POST request, so the CSRF token is checked and a link cannot sign a user out. */ ?>
+            <form action="<?= e(url('/logout')) ?>" method="post" class="pos-topbar-logout">
+                <?= Csrf::field() ?>
+                <button type="submit" class="btn btn-sm">Log out</button>
+            </form>
+        </div>
+    <?php endif; ?>
+</header>
+
 <main class="pos-main">
-<?php if ($m = flash('error')): ?><p class="error"><?= e($m) ?></p><?php endif; ?>
-<?= $content ?? '' ?>
+    <?php foreach ($messages as $message): ?>
+        <p class="pos-flash pos-flash-<?= e($message['type']) ?>" role="status"><?= e($message['message']) ?></p>
+    <?php endforeach; ?>
+<?= $content ?>
 </main>
-<script src="<?= e(base_url('assets/js/pos.js')) ?>"></script>
-</body></html>
+
+<script src="<?= e(asset('js/pos.js')) ?>"></script>
+</body>
+</html>
