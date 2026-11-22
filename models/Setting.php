@@ -12,11 +12,21 @@ final class Setting extends Model
 {
     public static function get(string $key, ?string $default = null): ?string
     {
-        throw new LogicException('Not implemented: task 6.2.');
+        $row = self::selectOne('SELECT setting_value FROM settings WHERE setting_key = ?', [$key]);
+
+        return $row['setting_value'] ?? $default;
     }
 
+    /**
+     * @return array<string, string>
+     */
     public static function all(): array
     {
-        throw new LogicException('Not implemented: task 6.2.');
+        $settings = [];
+        foreach (self::select('SELECT setting_key, setting_value FROM settings') as $row) {
+            $settings[$row['setting_key']] = $row['setting_value'];
+        }
+
+        return $settings;
     }
 }

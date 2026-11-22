@@ -11,10 +11,10 @@ declare(strict_types=1);
 final class AuditLogger
 {
     /**
-     * Call inside the same transaction as the action being recorded.
+     * Call inside the same transaction as the action, so the entry and the change are saved together.
      */
     public static function log(?int $userId, string $action, string $details = ''): void
     {
-        throw new LogicException('Not implemented: task 6.3.');
+        AuditLog::create($userId, $action, $details, clientIp());
     }
 }
