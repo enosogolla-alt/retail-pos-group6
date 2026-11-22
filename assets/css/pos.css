@@ -1,0 +1,569 @@
+/*
+ * Checkout screen and payment dialog styles. Builds on the tokens and components in app.css.
+ * Owner: Stacy Kwamboka (M3)
+ * Tasks: 3.1-3.5
+ */
+
+/* Page frame */
+
+.pos-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.pos-topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 24px;
+    background: var(--gradient-chrome);
+    box-shadow: 0 10px 30px -18px rgba(8, 46, 38, 0.8);
+    color: #ffffff;
+}
+
+.pos-topbar .btn {
+    border-color: rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.pos-topbar .btn:hover:not(:disabled) {
+    border-color: var(--mint);
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+}
+
+.pos-nav {
+    display: flex;
+    gap: 6px;
+}
+
+.pos-topbar .btn.is-current {
+    border-color: #ffffff;
+    background: #ffffff;
+    color: var(--primary-hover);
+}
+
+.pos-topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.pos-topbar-section {
+    padding: 3px 10px;
+    border: 1px solid rgba(127, 216, 180, 0.35);
+    border-radius: var(--radius-pill);
+    color: var(--mint);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.pos-topbar-user {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 14px;
+}
+
+.pos-topbar-user strong {
+    color: #ffffff;
+}
+
+.pos-topbar-logout {
+    margin: 0;
+}
+
+.pos-main {
+    flex: 1;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 20px 24px 32px;
+    animation: rise-in 320ms var(--ease) both;
+}
+
+/* Layout: items on the left, summary on the right; stacks on narrow screens. */
+
+.checkout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.checkout-items {
+    display: flex;
+    flex: 999 1 560px;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+/* Product search */
+
+.scan-box {
+    position: relative;
+}
+
+.scan-box-icon {
+    position: absolute;
+    top: 16px;
+    left: 14px;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.scan-box-input {
+    height: 52px;
+    padding-left: 46px;
+    border-radius: 14px;
+    box-shadow: var(--shadow-card);
+    font-size: 16px;
+}
+
+.scan-box .field-error {
+    margin-top: 6px;
+}
+
+/* Quick add */
+
+.quick-add {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.quick-add-title {
+    margin-right: 2px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.quick-add .chip {
+    min-height: 32px;
+    font-size: 12px;
+}
+
+/* Cart */
+
+.cart {
+    overflow: hidden;
+}
+
+.cart-count {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.cart-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 40px 16px;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+}
+
+.cart-empty[hidden] {
+    display: none;
+}
+
+.cart-empty-icon {
+    margin-bottom: 8px;
+    color: var(--line-strong);
+}
+
+.cart-empty-title {
+    color: var(--ink-soft);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+/* Order summary */
+
+.checkout-summary {
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex: 1 1 300px;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 100%;
+    padding: 20px;
+    box-shadow: var(--shadow-raised);
+}
+
+.summary-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    font-size: 13px;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.summary-line dt {
+    color: var(--muted);
+}
+
+.summary-line dd {
+    margin: 0;
+}
+
+/* The amount due is the one figure the cashier must never miss. */
+.summary-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 4px -4px;
+    padding: 16px 18px;
+    border-radius: var(--radius-md);
+    background: var(--gradient-chrome);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.summary-total-amount {
+    color: #ffffff;
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    transition: transform var(--speed) var(--ease);
+}
+
+.summary-action {
+    min-height: 36px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Payment dialog */
+
+.pay-dialog {
+    width: min(460px, calc(100vw - 32px));
+    max-height: 92vh;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-raised);
+    color: var(--ink);
+}
+
+.pay-dialog[open] {
+    animation: pay-in 220ms var(--ease) both;
+}
+
+.pay-dialog::backdrop {
+    background: rgba(7, 42, 35, 0.45);
+    backdrop-filter: blur(3px);
+}
+
+@keyframes pay-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.pay-dialog-head {
+    padding: 20px 24px 16px;
+    background: linear-gradient(180deg, var(--primary-soft) 0%, #ffffff 100%);
+}
+
+.pay-dialog-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.pay-tabs {
+    display: flex;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--line);
+}
+
+.pay-tab {
+    flex: 1;
+    min-height: 44px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    background: none;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color var(--speed) var(--ease), border-color var(--speed) var(--ease);
+}
+
+.pay-tab:hover {
+    color: var(--primary-hover);
+}
+
+.pay-tab.is-active {
+    border-bottom-color: var(--primary);
+    color: var(--primary);
+}
+
+.pay-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+}
+
+.pay-due,
+.pay-change {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--ink-soft);
+    font-weight: 600;
+}
+
+.pay-due {
+    padding: 16px 18px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--primary-soft) 0%, #f4fbf7 100%);
+}
+
+.pay-due-amount,
+.pay-change-amount {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+.pay-due-amount {
+    color: var(--ink);
+}
+
+.pay-change-amount {
+    color: var(--primary);
+}
+
+.pay-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.pay-panel[hidden] {
+    display: none;
+}
+
+.pay-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 0 20px 20px;
+}
+
+/* Cart rows */
+
+.cart-item-name {
+    font-weight: 700;
+}
+
+.cart-item-code {
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.qty-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.qty-value {
+    min-width: 28px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: var(--surface-raised);
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.icon-btn:hover {
+    background: var(--surface-sunken);
+}
+
+.icon-btn-danger {
+    border-color: transparent;
+    color: var(--danger);
+}
+
+/* Discount */
+
+.discount-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface-sunken);
+}
+
+.discount-panel[hidden] {
+    display: none;
+}
+
+.discount-row {
+    display: flex;
+    gap: 8px;
+}
+
+/* Messages from the server, such as a temporary-password reminder */
+
+.pos-flash {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--warning-soft);
+    color: var(--warning);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.pos-flash-success {
+    background: var(--primary-soft);
+    color: var(--primary-hover);
+}
+
+.pos-flash-error {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+/* M-Pesa prompt */
+
+.mpesa-send-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mpesa-send-row .field {
+    flex: 1 1 180px;
+}
+
+.mpesa-hint {
+    font-size: 12px;
+}
+
+.mpesa-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--surface-sunken);
+    color: var(--ink-soft);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.mpesa-status[hidden] {
+    display: none;
+}
+
+.mpesa-status.is-paid {
+    background: var(--primary-soft);
+    color: var(--primary-hover);
+}
+
+.mpesa-status.is-failed {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.mpesa-spinner {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    border: 3px solid var(--line-strong);
+    border-top-color: var(--mpesa);
+    border-radius: 50%;
+    animation: mpesa-spin 0.9s linear infinite;
+}
+
+.mpesa-status.is-paid .mpesa-spinner,
+.mpesa-status.is-failed .mpesa-spinner {
+    display: none;
+}
+
+@keyframes mpesa-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mpesa-spinner {
+        animation-duration: 2.4s;
+    }
+}
+
+.pay-error {
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--danger-soft);
+}
+
+/* Cashier's own sales: the shared admin components stacked with the page's rhythm. */
+.history {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
