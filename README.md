@@ -45,9 +45,28 @@ PHP 8.2+, MySQL (InnoDB), HTML5, CSS3 and JavaScript, served by Apache through X
 
 3. Start **Apache** and **MySQL** from the XAMPP Control Panel.
 
-4. Create the database. In phpMyAdmin (`http://localhost/phpmyadmin`), open **Import** and run `database/schema.sql`, then `database/seed.sql`.
+4. Create the database. In phpMyAdmin (`http://localhost/phpmyadmin`), open **Import** and run `database/schema.sql`, then `database/seed.sql`. Running them again resets all data.
 
-5. Open `http://localhost/retail-pos-group6/login` once the front controller (task 2.3) and sign-in page (task 1.1) are merged.
+5. Open `http://localhost/retail-pos-group6/` and sign in.
+
+## Sample accounts
+
+| Role | Username | Password |
+|---|---|---|
+| Admin | `admin` | `admin123` |
+| Cashier | `cashier` | `1234` |
+| Cashier | `kevin` | `kevin123` |
+| Cashier (deactivated) | `grace` | `grace123` |
+
+Admins manage the shop: products, stock, suppliers, staff, reports and the audit log. Only cashiers use the checkout. In a shop where the owner also serves customers, the owner keeps one account of each role.
+
+Discounts at the till are limited to 10% of the sale.
+
+The sample data includes suppliers, three days of sales, deliveries and other stock movements, a voided sale, a price change and audit entries, all dated relative to the day `seed.sql` is imported.
+
+## M-Pesa
+
+Payments use M-Pesa Express (STK Push) in simulation: the prompt is confirmed a few seconds after it is sent and a code is generated. A phone number ending in `0000` simulates a customer cancelling. The code can also be entered manually.
 
 ## Running tests
 
