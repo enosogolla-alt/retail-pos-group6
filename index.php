@@ -1,57 +1,98 @@
 <?php
-session_start();
-require __DIR__ . '/core/helpers.php';
-require __DIR__ . '/config/database.php';
-require __DIR__ . '/core/Csrf.php';
-require __DIR__ . '/core/Auth.php';
-require __DIR__ . '/core/Router.php';
 
-spl_autoload_register(function ($class) {
-    foreach (['models', 'controllers', 'services'] as $dir) {
-        $f = __DIR__ . "/$dir/$class.php";
-        if (file_exists($f)) { require $f; return; }
+declare(strict_types=1);
+
+/**
+ * Front controller. Every request enters here and is dispatched by the router.
+ *
+ * Owner: Kyle Tarus (M2)
+ * Tasks: 2.3
+ */
+
+define('BASE_PATH', __DIR__);
+
+require BASE_PATH . '/core/autoload.php';
+require BASE_PATH . '/core/helpers.php';
+
+if (!is_file(BASE_PATH . '/config/config.php')) {
+    http_response_code(500);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Configuration missing. Copy config/config.example.php to config/config.php and set your database details.';
+    exit;
+}
+
+require BASE_PATH . '/config/database.php';
+
+date_default_timezone_set((string) config('app.timezone', 'Africa/Nairobi'));
+error_reporting(E_ALL);
+ini_set('display_errors', config('app.debug', false) ? '1' : '0');
+
+session_name('retailpos');
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => basePath() === '' ? '/' : basePath() . '/',
+    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
+session_start();
+
+$router = new Router(basePath());
+
+$router->get('/', static function (): void {
+    if (!Auth::check()) {
+        redirect('/login');
     }
+    redirect(Auth::hasRole('Admin') ? '/admin/dashboard' : '/pos');
 });
 
-// CSRF on every POST except the Safaricom callback
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && strpos($_SERVER['REQUEST_URI'], '/mpesa/callback') === false) Csrf::check();
+// Module 1 · Authentication & Inventory Control
+$router->get('/login', [AuthController::class, 'showLogin']);
+$router->post('/login', [AuthController::class, 'login']);
+$router->post('/logout', [AuthController::class, 'logout']);
 
-$r = new Router();
-// Public
-$r->get('/login',   fn() => (new AuthController())->showLogin());
-$r->post('/login',  fn() => (new AuthController())->login());
-$r->post('/logout', fn() => (new AuthController())->logout());
-$r->get('/',        fn() => redirect(Auth::check() ? (Auth::role() === 'Admin' ? 'admin/dashboard' : 'pos') : 'login'));
-// Admin: dashboard, products, stock
-$r->get('/admin/dashboard',  fn() => (new ProductController())->dashboard());
-$r->get('/dashboard/alerts', fn() => (new ProductController())->alerts());
-$r->get('/admin/products',              fn() => (new ProductController())->index());
-$r->post('/admin/products',             fn() => (new ProductController())->create());
-$r->post('/admin/products/{id}',        fn($id) => (new ProductController())->update($id));
-$r->post('/admin/products/{id}/toggle', fn($id) => (new ProductController())->deactivate($id));
-$r->get('/admin/stock',   fn() => (new ProductController())->stock());
-$r->post('/stock/adjust', fn() => (new ProductController())->adjustStock());
-// Admin: users
-$r->get('/admin/users',                 fn() => (new UserController())->index());
-$r->post('/admin/users',                fn() => (new UserController())->create());
-$r->post('/admin/users/{id}',           fn($id) => (new UserController())->update($id));
-$r->post('/admin/users/{id}/reset',     fn($id) => (new UserController())->resetPassword($id));
-$r->post('/admin/users/{id}/unlock',    fn($id) => (new UserController())->unlock($id));
-$r->post('/admin/users/{id}/toggle',    fn($id) => (new UserController())->toggle($id));
-// POS (Winston)
-$r->get('/pos',             fn() => (new SaleController())->checkout());
-$r->get('/products/lookup', fn() => (new SaleController())->findProduct($_GET['code'] ?? ''));
-$r->post('/sales',          fn() => (new SaleController())->createSale());
-$r->post('/mpesa/stk',      fn() => (new SaleController())->sendMpesaPrompt());
-$r->get('/mpesa/status',    fn() => (new SaleController())->mpesaStatus());
-$r->post('/mpesa/callback', fn() => (new SaleController())->mpesaCallback());
-// Receipts + void (David)
-$r->get('/receipts/{no}',      fn($no) => (new ReceiptController())->receipt($no));
-$r->get('/receipts/{no}/copy', fn($no) => (new ReceiptController())->reprint($no));
-$r->post('/sales/{id}/void',   fn($id) => (new ReceiptController())->voidSale($id));
-// Reports + audit (David)
-$r->get('/admin/reports',     fn() => (new ReportController())->daily());
-$r->get('/admin/reports/csv', fn() => (new ReportController())->exportCsv());
-$r->get('/admin/audit',       fn() => (new ReportController())->auditLog());
+$router->get('/admin/dashboard', [ProductController::class, 'dashboard']);
+$router->get('/dashboard/alerts', [ProductController::class, 'alerts']);
+$router->get('/admin/products', [ProductController::class, 'index']);
+$router->post('/admin/products', [ProductController::class, 'create']);
+$router->post('/admin/products/{id}', [ProductController::class, 'update']);
+$router->post('/admin/products/{id}/toggle', [ProductController::class, 'toggle']);
+$router->get('/admin/stock', [ProductController::class, 'stock']);
+$router->post('/stock/adjust', [ProductController::class, 'adjustStock']);
 
-$r->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
+$router->get('/admin/users', [UserController::class, 'index']);
+$router->post('/admin/users', [UserController::class, 'create']);
+$router->post('/admin/users/{id}', [UserController::class, 'update']);
+$router->post('/admin/users/{id}/reset', [UserController::class, 'resetPassword']);
+$router->post('/admin/users/{id}/unlock', [UserController::class, 'unlock']);
+$router->post('/admin/users/{id}/toggle', [UserController::class, 'toggle']);
+
+// Module 2 · Sales & Checkout Terminal
+$router->get('/pos', [SaleController::class, 'checkout']);
+$router->get('/products/lookup', [SaleController::class, 'findProduct']);
+$router->post('/sales', [SaleController::class, 'createSale']);
+$router->post('/mpesa/stk', [SaleController::class, 'sendMpesaPrompt']);
+$router->get('/mpesa/status', [SaleController::class, 'mpesaStatus']);
+$router->post('/mpesa/callback', [SaleController::class, 'mpesaCallback']);
+
+// Module 3 · Stock Sync & Digital Receipts
+$router->get('/receipts/{receiptNo}', [SaleController::class, 'receipt']);
+$router->post('/sales/{id}/void', [SaleController::class, 'voidSale']);
+$router->get('/admin/reports', [ReportController::class, 'daily']);
+$router->get('/admin/reports/csv', [ReportController::class, 'exportCsv']);
+$router->get('/admin/audit', [ReportController::class, 'auditLog']);
+$router->get('/my-sales', [SaleController::class, 'history']);
+$router->get('/admin/suppliers', [SupplierController::class, 'index']);
+$router->post('/admin/suppliers', [SupplierController::class, 'create']);
+$router->post('/admin/suppliers/{id}', [SupplierController::class, 'update']);
+$router->post('/admin/suppliers/{id}/toggle', [SupplierController::class, 'toggle']);
+
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$uri = $_SERVER['REQUEST_URI'] ?? '/';
+
+// Safaricom calls the callback server-to-server, so it cannot carry a session token.
+if ($method === 'POST' && $router->path($uri) !== '/mpesa/callback') {
+    Csrf::verify();
+}
+
+$router->dispatch($method, $uri);
